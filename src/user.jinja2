@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Advent of Code</title>
     <link rel="stylesheet" href="../../static/bulma.min.css">
+
+    <style>
+      body {
+        font-variant-numeric: tabular-nums;
+      }
+    </style>
+
   </head>
   <body>
 
@@ -40,9 +47,26 @@
   </tbody>
 </table>
 
-
-
-
+<table class="table is-bordered">
+  <thead>
+    <tr>
+      <th>Timestamp</th>
+      <th>Year</th>
+      <th>Day</th>
+      <th>Task</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in user_task_data %}
+    <tr>
+      <td>{{ row['date_time_eastern_time_zone'] }}</td>
+      <td><a href="../../{{ row['year'] }}">{{ row['year'] }}</a></td>
+      <td>{{ row['day'] }}</td>
+      <td>{{ row['task'] }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
 
     </div>
   </section>

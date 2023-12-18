@@ -3,14 +3,16 @@
 import os
 import shutil
 import json
+import sys
 import sqlite3
-from datetime import datetime, timezone
+import pytz
+import datetime
 from jinja2 import Template, FileSystemLoader, Environment
 
 VERSION = 'dev'
 
 def log_message(message):
-    current_time_utc = datetime.now(timezone.utc)
+    current_time_utc = datetime.datetime.now(datetime.timezone.utc)
     timestamp_iso8601 = current_time_utc.replace(microsecond=0, tzinfo=None).isoformat() + 'Z'
     print(f"{timestamp_iso8601} {message}")
 
@@ -83,6 +85,17 @@ def create_sqlite3_tables(file_name):
         )
     ''')
 
+    # Create the 'tasks' table if it doesn't exist
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS tasks (
+            user_id INTEGER,
+            year INTEGER,
+            day INTEGER,
+            task INTEGER,
+            timestamp INTEGER
+        )
+    ''')
+
     # Commit changes and close connection
     conn.commit()
     conn.close()
@@ -148,6 +161,40 @@ def get_distinct_user_ids(file_name):
         print(f"Error retrieving distinct user_ids: {e}")
         return None
 
+def get_user_task_data(db_file_name, user_id):
+    try:
+        conn = sqlite3.connect(db_file_name)  # Connect to the SQLite database
+        cursor = conn.cursor()
+
+        # SQL query to fetch data for a specific user ordered by year
+        cursor.execute('''
+            select timestamp, year,  day, task from tasks where user_id = ? order by timestamp
+        ''', (user_id,))
+
+        # Fetch all rows as a list of tuples
+        rows = cursor.fetchall()
+
+        # Store the fetched rows in a list of dictionaries
+        user_year_data = []
+        for row in rows:
+            row_dict = {
+                'timestamp': row[0],
+                'date_time_eastern_time_zone': get_date_time_eastern_time_zone(row[0]),
+                'year': row[1],
+                'day': row[2],
+                'task': row[3]
+            }
+            user_year_data.append(row_dict)
+
+        # Close the connection
+        conn.close()
+
+        return user_year_data
+
+    except sqlite3.Error as e:
+        print(f"Error retrieving data: {e}")
+        return None
+
 def get_user_year_data(db_file_name, user_id):
     try:
         conn = sqlite3.connect(db_file_name)  # Connect to the SQLite database
@@ -209,6 +256,13 @@ def get_user_id_to_user_name_map(db_file_name):
         print(f"Error retrieving data: {e}")
         return None
 
+def get_date_time_eastern_time_zone(timestamp):
+
+    dt = datetime.datetime.fromtimestamp(timestamp)
+
+    et = pytz.timezone('US/Eastern')
+
+    return dt.astimezone(et).isoformat()
 
 if __name__ == '__main__':
     log_message('Started visualize_advent_of_code_private_leaderboard:' + VERSION)
@@ -241,6 +295,15 @@ if __name__ == '__main__':
                 VALUES (?, ?, ?, ?, ?)
             ''', (year, user_id, user_name, stars, score))
 
+            for day_id in data['members'][user_id]['completion_day_level']:
+                for task_id in data['members'][user_id]['completion_day_level'][day_id]:
+                    ts = data['members'][user_id]['completion_day_level'][day_id][task_id]['get_star_ts']
+
+                    cursor.execute('''
+                        INSERT INTO tasks (user_id, year, day, task, timestamp)
+                        VALUES (?, ?, ?, ?, ?)
+                    ''', (user_id, year, day_id, task_id, ts))
+
     conn.commit()
     conn.close()
 
@@ -257,4 +320,6 @@ if __name__ == '__main__':
         create_file_from_jinja('/app/src/year.jinja2', '/output/' + str(year) + '/index.html', {'current_year':year,'reversed_years':reversed_years, "year_data": get_year_data(db_file_name, year)})
 
     for user_id in get_distinct_user_ids(db_file_name):
-        create_file_from_jinja('/app/src/user.jinja2', '/output/user/' + str(user_id) + '/index.html', { 'user_id': user_id, 'user_name': user_id2user_name[user_id], 'user_year_data': get_user_year_data(db_file_name, user_id)})
+        create_file_from_jinja('/app/src/user.jinja2', '/output/user/' + str(user_id) + '/index.html', { 'user_id': user_id, 'user_name': user_id2user_name[user_id], 'user_year_data': get_user_year_data(db_file_name, user_id), 'user_task_data': get_user_task_data(db_file_name, user_id)})
+
+    log_message('Finished')
