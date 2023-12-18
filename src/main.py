@@ -92,7 +92,7 @@ def get_data_from_json_file(file_name):
         data = json.load(file)
     return data
 
-def get_data_as_array_of_dicts(file_name, year):
+def get_year_data(file_name, year):
     try:
         conn = sqlite3.connect(file_name)  # Connect to the SQLite database
         cursor = conn.cursor()
@@ -127,6 +127,88 @@ def get_data_as_array_of_dicts(file_name, year):
     except sqlite3.Error as e:
         print(f"Error retrieving data: {e}")
         return None
+
+def get_distinct_user_ids(file_name):
+    try:
+        conn = sqlite3.connect(file_name)  # Connect to the SQLite database
+        cursor = conn.cursor()
+
+        # SQL query to select distinct user_ids from the 'years' table
+        cursor.execute('SELECT DISTINCT user_id FROM years')
+
+        # Fetch all distinct user_ids and store them in an array
+        distinct_user_ids = [row[0] for row in cursor.fetchall()]
+
+        # Close the connection
+        conn.close()
+
+        return distinct_user_ids
+
+    except sqlite3.Error as e:
+        print(f"Error retrieving distinct user_ids: {e}")
+        return None
+
+def get_user_year_data(db_file_name, user_id):
+    try:
+        conn = sqlite3.connect(db_file_name)  # Connect to the SQLite database
+        cursor = conn.cursor()
+
+        # SQL query to fetch data for a specific user ordered by year
+        cursor.execute('''
+            SELECT year, stars, score FROM years
+            WHERE user_id = ?
+            ORDER BY year
+        ''', (user_id,))
+
+        # Fetch all rows as a list of tuples
+        rows = cursor.fetchall()
+
+        # Store the fetched rows in a list of dictionaries
+        user_year_data = []
+        for row in rows:
+            row_dict = {
+                'year': row[0],
+                'stars': row[1],
+                'score': row[2]
+            }
+            user_year_data.append(row_dict)
+
+        # Close the connection
+        conn.close()
+
+        return user_year_data
+
+    except sqlite3.Error as e:
+        print(f"Error retrieving data: {e}")
+        return None
+
+def get_user_id_to_user_name_map(db_file_name):
+    try:
+        conn = sqlite3.connect(db_file_name)  # Connect to the SQLite database
+        cursor = conn.cursor()
+
+        # SQL query to get distinct user_id and corresponding user_name
+        cursor.execute('''
+            SELECT user_id, MIN(user_name) AS user_name
+            FROM years
+            GROUP BY user_id
+        ''')
+
+        # Fetch all rows as a list of tuples
+        rows = cursor.fetchall()
+
+        # Create a dictionary mapping user_id to user_name
+        user_id_to_user_name_map = {user_id: user_name for user_id, user_name in rows}
+
+        # Close the connection
+        conn.close()
+
+        return user_id_to_user_name_map
+
+    except sqlite3.Error as e:
+        print(f"Error retrieving data: {e}")
+        return None
+
 
 if __name__ == '__main__':
     log_message('Started visualize_advent_of_code_private_leaderboard:' + VERSION)
@@ -169,5 +251,10 @@ if __name__ == '__main__':
         'reversed_years': reversed_years,
     }
 
+    user_id2user_name = get_user_id_to_user_name_map(db_file_name)
+
     for year in years:
-        create_file_from_jinja('/app/src/year.jinja2', '/output/' + str(year) + '/index.html', {'current_year':year,'reversed_years':reversed_years, "year_data": get_data_as_array_of_dicts(db_file_name, year)})
+        create_file_from_jinja('/app/src/year.jinja2', '/output/' + str(year) + '/index.html', {'current_year':year,'reversed_years':reversed_years, "year_data": get_year_data(db_file_name, year)})
+
+    for user_id in get_distinct_user_ids(db_file_name):
+        create_file_from_jinja('/app/src/user.jinja2', '/output/user/' + str(user_id) + '/index.html', { 'user_id': user_id, 'user_name': user_id2user_name[user_id], 'user_year_data': get_user_year_data(db_file_name, user_id)})
