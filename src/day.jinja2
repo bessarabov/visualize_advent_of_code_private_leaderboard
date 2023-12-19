@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Advent of Code</title>
-    <link rel="stylesheet" href="../static/bulma.min.css">
+    <link rel="stylesheet" href="../../static/bulma.min.css">
 
     <style>
       body {
@@ -17,7 +17,7 @@
 
 <nav class="navbar" role="navigation" aria-label="main navigation">
   <div class="navbar-brand">
-    <a class="navbar-item" href="../">
+    <a class="navbar-item" href="../../../">
       <h1 class="title">AoC</h1>
     </a>
   </div>
@@ -30,7 +30,7 @@
           <ul>
             {% for year in reversed_years %}
             <li {% if year == current_year %}class="is-active"{% endif %}>
-              <a href="../{{ year }}/">
+              <a href="../../{{ year }}/">
                 <span>{{ year }}</span>
               </a>
             </li>
@@ -40,14 +40,14 @@
 
         <div class="tabs is-boxed">
           <ul>
-            <li class="is-active">
-              <a>
+            <li>
+              <a href="../">
                 <span>Summary</span>
               </a>
             </li>
             {% for day in days %}
-            <li>
-              <a href="../{{ current_year }}/{{ day }}/">
+            <li {% if day == current_day %}class="is-active"{% endif %}>
+              <a href="../{{ day }}/">
                 <span>{{ day }}</span>
               </a>
             </li>
@@ -56,29 +56,44 @@
         </div>
 
 <br/>
-<h2 class="subtitle">Leaderboard</h2>
+<h2 class="subtitle">Second star</h2>
 
 <table class="table is-bordered">
   <thead>
     <tr>
+      <th>Timestamp</th>
       <th>User</th>
-      <th>Stars</th>
-      <th>Score</th>
     </tr>
   </thead>
   <tbody>
-    {% for row in year_data %}
+    {% for row in second_star_data %}
     <tr>
-      <td><a href="../user/{{ row['user_id'] }}/">{{ row['user_name'] }}</a></td>
-      <td>{{ row['stars'] }}</td>
-      <td>{{ row['score'] }}</td>
+      <td>{{ row['date_time_eastern_time_zone'] }}</td>
+      <td><a href="../../user/{{ row['user_id'] }}/">{{ row['user_name'] }}</a></td>
     </tr>
     {% endfor %}
   </tbody>
 </table>
 
+<br/>
+<h2 class="subtitle">First star</h2>
 
-
+<table class="table is-bordered">
+  <thead>
+    <tr>
+      <th>Timestamp</th>
+      <th>User</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in first_star_data %}
+    <tr>
+      <td>{{ row['date_time_eastern_time_zone'] }}</td>
+      <td><a href="../../user/{{ row['user_id'] }}/">{{ row['user_name'] }}</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
 
 
     </div>

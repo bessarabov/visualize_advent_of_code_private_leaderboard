@@ -229,6 +229,50 @@ def get_user_year_data(db_file_name, user_id):
         print(f"Error retrieving data: {e}")
         return None
 
+def get_day_data(db_file_name, user_id2user_name, year, day, task):
+    try:
+        conn = sqlite3.connect(db_file_name)  # Connect to the SQLite database
+        cursor = conn.cursor()
+
+        # SQL query to fetch data for a specific user ordered by year
+        cursor.execute('''
+            select timestamp, user_id
+            from tasks
+            where year = ? and day = ? and task = ?
+            order by timestamp
+        ''', (year,day,task,))
+
+        # Fetch all rows as a list of tuples
+        rows = cursor.fetchall()
+
+        # Store the fetched rows in a list of dictionaries
+        user_year_data = []
+        for row in rows:
+            row_dict = {
+                'timestamp': row[0],
+                'date_time_eastern_time_zone': get_date_time_eastern_time_zone(row[0]),
+                'user_id': row[1],
+                'user_name': user_id2user_name[row[1]],
+            }
+            user_year_data.append(row_dict)
+
+        # Close the connection
+        conn.close()
+
+        return user_year_data
+
+    except sqlite3.Error as e:
+        print(f"Error retrieving data: {e}")
+        return None
+
+def get_days_in_year(year):
+    now = get_dt_now_eastern_time_zone()
+
+    if now.year == year:
+        return list(range(1, min(now.day+1,26)))
+    else: 
+        return list(range(1, 26))
+
 def get_user_id_to_user_name_map(db_file_name):
     try:
         conn = sqlite3.connect(db_file_name)  # Connect to the SQLite database
@@ -263,6 +307,14 @@ def get_date_time_eastern_time_zone(timestamp):
     et = pytz.timezone('US/Eastern')
 
     return dt.astimezone(et).isoformat()
+
+def get_dt_now_eastern_time_zone():
+
+    dt = datetime.datetime.now()
+
+    et = pytz.timezone('US/Eastern')
+
+    return dt.astimezone(et)
 
 if __name__ == '__main__':
     log_message('Started visualize_advent_of_code_private_leaderboard:' + VERSION)
@@ -317,8 +369,14 @@ if __name__ == '__main__':
     user_id2user_name = get_user_id_to_user_name_map(db_file_name)
 
     for year in years:
-        create_file_from_jinja('/app/src/year.jinja2', '/output/' + str(year) + '/index.html', {'current_year':year,'reversed_years':reversed_years, "year_data": get_year_data(db_file_name, year)})
+        log_message('Working on year ' + str(year))
+        days = get_days_in_year(year)
+        create_file_from_jinja('/app/src/year.jinja2', '/output/' + str(year) + '/index.html', {'current_year':year,'reversed_years':reversed_years, "year_data": get_year_data(db_file_name, year), 'days': days})
 
+        for day in days:
+            create_file_from_jinja('/app/src/day.jinja2', '/output/' + str(year) + '/' + str(day) + '/index.html', {'current_year':year,'current_day':day, 'reversed_years':reversed_years, 'days': days, 'first_star_data':get_day_data(db_file_name, user_id2user_name, year, day, 1), 'second_star_data':get_day_data(db_file_name, user_id2user_name, year, day, 2)})
+
+    log_message('Working on users')
     for user_id in get_distinct_user_ids(db_file_name):
         create_file_from_jinja('/app/src/user.jinja2', '/output/user/' + str(user_id) + '/index.html', { 'user_id': user_id, 'user_name': user_id2user_name[user_id], 'user_year_data': get_user_year_data(db_file_name, user_id), 'user_task_data': get_user_task_data(db_file_name, user_id)})
 
