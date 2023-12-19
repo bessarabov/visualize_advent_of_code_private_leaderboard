@@ -306,7 +306,12 @@ def get_date_time_eastern_time_zone(timestamp):
 
     et = pytz.timezone('US/Eastern')
 
-    return dt.astimezone(et).isoformat()
+    str = dt.astimezone(et).isoformat() 
+    str = str.replace('T', ' ')
+    str = str.replace('-04:00', ' -04:00')
+    str = str.replace('-05:00', ' -05:00')
+
+    return str 
 
 def get_dt_now_eastern_time_zone():
 
