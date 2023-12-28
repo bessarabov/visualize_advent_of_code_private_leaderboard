@@ -66,6 +66,7 @@ Task: <a href="https://adventofcode.com/{{ current_year }}/day/{{ current_day }}
   <thead>
     <tr>
       <th>Timestamp</th>
+      <th>Time from frist star</th>
       <th>User</th>
     </tr>
   </thead>
@@ -73,6 +74,7 @@ Task: <a href="https://adventofcode.com/{{ current_year }}/day/{{ current_day }}
     {% for row in second_star_data %}
     <tr>
       <td>{{ row['date_time_eastern_time_zone'] }}</td>
+      <td class="has-text-right">{{ row['time_from_first_star'] }}</td>
       <td><a href="../../user/{{ row['user_id'] }}/">{{ row['user_name'] }}</a></td>
     </tr>
     {% endfor %}

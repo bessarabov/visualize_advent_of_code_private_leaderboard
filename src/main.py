@@ -100,10 +100,43 @@ def create_sqlite3_tables(file_name):
     conn.commit()
     conn.close()
 
+def get_human_time_from_seconds(seconds):
+    days = seconds // (24 * 3600)
+    seconds %= (24 * 3600)
+    hours = seconds // 3600
+    seconds %= 3600
+    minutes = seconds // 60
+    seconds %= 60
+
+    if days > 0:
+        return f"{days}d {hours:02d}:{minutes:02d}:{seconds:02d}"
+    else:
+        return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+    
 def get_data_from_json_file(file_name):
     with open(file_name, 'r') as file:
         data = json.load(file)
     return data
+    
+def get_data_from_sqlite(db_file_name, sql_query, parameters=None):
+    try:
+        conn = sqlite3.connect(db_file_name)  # Connect to the SQLite database
+        cursor = conn.cursor()
+
+        if parameters:
+            cursor.execute(sql_query, parameters)
+        else:
+            cursor.execute(sql_query)
+
+        rows = cursor.fetchall()  # Fetch all rows
+
+        conn.close()  # Close the connection
+
+        return rows
+
+    except sqlite3.Error as e:
+        print(f"Error retrieving data: {e}")
+        return None
 
 def get_year_data(file_name, year):
     try:
@@ -230,22 +263,23 @@ def get_user_year_data(db_file_name, user_id):
         return None
 
 def get_day_data(db_file_name, user_id2user_name, year, day, task):
-    try:
-        conn = sqlite3.connect(db_file_name)  # Connect to the SQLite database
-        cursor = conn.cursor()
+    sql_query = '''
+        SELECT timestamp, user_id
+        FROM tasks
+        WHERE year = ? AND day = ? AND task = ?
+        ORDER BY timestamp
+    '''
+    parameters = (year, day, task)
 
-        # SQL query to fetch data for a specific user ordered by year
-        cursor.execute('''
-            select timestamp, user_id
-            from tasks
-            where year = ? and day = ? and task = ?
-            order by timestamp
-        ''', (year,day,task,))
+    rows = get_data_from_sqlite(db_file_name, sql_query, parameters)
 
-        # Fetch all rows as a list of tuples
-        rows = cursor.fetchall()
+    if task == 2:
+        user_id_to_timestamp_map = {}
+        first_task_rows = get_data_from_sqlite(db_file_name, sql_query, (year, day, 1)) 
+        for row in first_task_rows:
+            user_id_to_timestamp_map[row[1]] = row[0]
 
-        # Store the fetched rows in a list of dictionaries
+    if rows is not None:
         user_year_data = []
         for row in rows:
             row_dict = {
@@ -254,15 +288,11 @@ def get_day_data(db_file_name, user_id2user_name, year, day, task):
                 'user_id': row[1],
                 'user_name': user_id2user_name[row[1]],
             }
+            if task == 2:
+                row_dict['time_from_first_star'] = get_human_time_from_seconds(int(row[0]) - int(user_id_to_timestamp_map[row[1]]))
             user_year_data.append(row_dict)
-
-        # Close the connection
-        conn.close()
-
         return user_year_data
-
-    except sqlite3.Error as e:
-        print(f"Error retrieving data: {e}")
+    else:
         return None
 
 def get_days_in_year(year):
