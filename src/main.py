@@ -195,19 +195,19 @@ def get_distinct_user_ids(file_name):
         return None
 
 def get_user_task_data(db_file_name, user_id):
-    try:
-        conn = sqlite3.connect(db_file_name)  # Connect to the SQLite database
-        cursor = conn.cursor()
+    sql_query = '''
+        SELECT timestamp, year, day, task
+        FROM tasks
+        WHERE user_id = ?
+        ORDER BY timestamp
+    '''
+    parameters = (user_id,)
 
-        # SQL query to fetch data for a specific user ordered by year
-        cursor.execute('''
-            select timestamp, year,  day, task from tasks where user_id = ? order by timestamp
-        ''', (user_id,))
+    rows = get_data_from_sqlite(db_file_name, sql_query, parameters)
 
-        # Fetch all rows as a list of tuples
-        rows = cursor.fetchall()
-
-        # Store the fetched rows in a list of dictionaries
+    first_task_to_timestamp = {}
+    
+    if rows is not None:
         user_year_data = []
         for row in rows:
             row_dict = {
@@ -217,15 +217,15 @@ def get_user_task_data(db_file_name, user_id):
                 'day': row[2],
                 'task': row[3]
             }
+
+            key = str(row[1]) + "_" + str(row[2]) 
+            if row[3] == 1:
+                first_task_to_timestamp[key] = row[0]
+            if row[3] == 2:
+                row_dict['time_from_first_star'] = get_human_time_from_seconds(int(row[0]) - int(first_task_to_timestamp[key]))
             user_year_data.append(row_dict)
-
-        # Close the connection
-        conn.close()
-
         return user_year_data
-
-    except sqlite3.Error as e:
-        print(f"Error retrieving data: {e}")
+    else:
         return None
 
 def get_user_year_data(db_file_name, user_id):
