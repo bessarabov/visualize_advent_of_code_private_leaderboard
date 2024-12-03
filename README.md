@@ -39,6 +39,6 @@ $ docker run \
     --rm \
     -v `pwd`/input/:/input/ \
     -v `pwd`/output/:/output/ \
-    bessarabov/visualize_advent_of_code_private_leaderboard:1.1.0 \
+    bessarabov/visualize_advent_of_code_private_leaderboard:1.1.1 \
     ;
 ```

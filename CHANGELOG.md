@@ -1,6 +1,10 @@
 # Changelog for visualize_advent_of_code_private_leaderboard
 
 ```
+1.1.1   2024-12-03
+        [Patch]
+        Fixing misspell
+
 1.1.0   2023-12-28
         [Minor]
         * 'Time from frist star' on day page
