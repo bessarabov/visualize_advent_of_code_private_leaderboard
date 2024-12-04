@@ -23,7 +23,8 @@ input/
 ├── 2020.json
 ├── 2021.json
 ├── 2022.json
-└── 2023.json
+├── 2023.json
+└── 2024.json
 ```
 
 Next you need to create a directory to store generated HTML files:
