@@ -59,8 +59,8 @@
     {% for row in user_year_data %}
     <tr>
       <td><a href="../../{{ row['year'] }}/">{{ row['year'] }}</a></td>
-      <td>{{ row['stars'] }}</td>
-      <td>{{ row['score'] }}</td>
+      <td class="has-text-right">{{ row['stars'] }}</td>
+      <td class="has-text-right">{{ row['score'] }}</td>
       <td>
           {% for star_index in range(row['days']|length) %}
           <a href="../../{{ row['year'] }}/{{ star_index + 1 }}/" class="star star_{{ row['days'][star_index] }}"
@@ -101,8 +101,8 @@
     <tr>
       <td>{{ row['date_time_eastern_time_zone'] }}</td>
       <td><a href="../../{{ row['year'] }}/">{{ row['year'] }}</a></td>
-      <td><a href="../../{{ row['year'] }}/{{ row['day'] }}/">{{ row['day'] }}</a></td>
-      <td>{{ row['task'] }}</td>
+      <td class="has-text-right"><a href="../../{{ row['year'] }}/{{ row['day'] }}/">{{ row['day'] }}</a></td>
+      <td class="has-text-right">{{ row['task'] }}</td>
       <td class="has-text-right">{{ row['time_from_first_star'] }}</td>
     </tr>
     {% endfor %}

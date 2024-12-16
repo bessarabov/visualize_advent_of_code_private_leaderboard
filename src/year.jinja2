@@ -70,8 +70,8 @@
     {% for row in year_data %}
     <tr>
       <td><a href="../user/{{ row['user_id'] }}/">{{ row['user_name'] }}</a></td>
-      <td>{{ row['stars'] }}</td>
-      <td>{{ row['score'] }}</td>
+      <td class="has-text-right">{{ row['stars'] }}</td>
+      <td class="has-text-right">{{ row['score'] }}</td>
     </tr>
     {% endfor %}
   </tbody>
