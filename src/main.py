@@ -228,6 +228,24 @@ def get_user_task_data(db_file_name, user_id):
     else:
         return None
 
+def get_days_for_year_user_id(db_file_name, year, user_id):
+    conn = sqlite3.connect(db_file_name)
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        select day from tasks where user_id = ? and year = ?
+    ''', (user_id, year))
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    array = [0] * len(get_days_in_year(year))
+
+    for row in rows:
+        array[row[0]-1] += 1
+
+    return array
+
 def get_user_year_data(db_file_name, user_id):
     try:
         conn = sqlite3.connect(db_file_name)  # Connect to the SQLite database
@@ -249,7 +267,8 @@ def get_user_year_data(db_file_name, user_id):
             row_dict = {
                 'year': row[0],
                 'stars': row[1],
-                'score': row[2]
+                'score': row[2],
+                'days': get_days_for_year_user_id(db_file_name, row[0], user_id),
             }
             user_year_data.append(row_dict)
 
