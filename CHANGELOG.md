@@ -1,6 +1,16 @@
 # Changelog for visualize_advent_of_code_private_leaderboard
 
 ```
+1.2.0   2024-12-18
+        [Minor]
+        * /YYYY/stats/
+        * /YYYY/ - Add detailed display of daily star progress for each user
+        * /user/NNN/ - Add detailed display of daily star progress for each year
+        * Add row numbers to tables 'First star', 'Second star'
+
+        [Patch]
+        * Numbers in the tables are aligned to the right
+
 1.1.1   2024-12-03
         [Patch]
         Fixing misspell
