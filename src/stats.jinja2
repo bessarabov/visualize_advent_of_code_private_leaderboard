@@ -10,6 +10,24 @@
       body {
         font-variant-numeric: tabular-nums;
       }
+
+      .star {
+        font-family: monospace;
+        font-size: 1.5em;
+        line-height: 10px !important;
+      }
+
+      .star_0 {
+        color: #E5E5E5;
+      }
+
+      .star_1 {
+        color: #A0A0A0;
+      }
+
+      .star_2 {
+        color: #FFD700;
+      }
     </style>
 
   </head>
@@ -30,7 +48,7 @@
           <ul>
             {% for year in reversed_years %}
             <li {% if year == current_year %}class="is-active"{% endif %}>
-              <a href="../../{{ year }}/">
+              <a href="../../{{ year }}/stats/">
                 <span>{{ year }}</span>
               </a>
             </li>
@@ -52,7 +70,7 @@
               </a>
             </li>
             {% endfor %}
-            <li>
+            <li class="is-active">
               <a href="../stats/">
                 <span>Stats</span>
               </a>
@@ -61,55 +79,53 @@
         </div>
 
 <p>
-Task: <a href="https://adventofcode.com/{{ current_year }}/day/{{ current_day }}">https://adventofcode.com/{{ current_year }}/day/{{ current_day }}</a>
+Global stats: <a href="https://adventofcode.com/{{ current_year }}/stats">https://adventofcode.com/{{ current_year }}/stats</a>
 </p>
-
 <br/>
-<h2 class="subtitle">Second star</h2>
+
+<p>
+{% if stats_data.users_in_one_star == 1 %}
+One star represent one user.
+{% else %}
+One star represent up to {{ stats_data.users_in_one_star }} users.
+{% endif %}
+</p>
+<br/>
 
 <table class="table is-bordered">
   <thead>
     <tr>
-      <th>#</th>
-      <th>Timestamp</th>
-      <th>Time from first star</th>
-      <th>User</th>
+      <th>Day</th>
+      <th>Both stars</th>
+      <th>Only first star</th>
+      <th>Stars</th>
     </tr>
   </thead>
   <tbody>
-    {% for row in second_star_data %}
+  {% for i in range(25, 0, -1) %}
     <tr>
-      <td>{{ loop.index }}</td>
-      <td>{{ row['date_time_eastern_time_zone'] }}</td>
-      <td class="has-text-right">{{ row['time_from_first_star'] }}</td>
-      <td><a href="../../user/{{ row['user_id'] }}/">{{ row['user_name'] }}</a></td>
+    {% if i in stats_data %}
+      <td class="has-text-right"><a href="../{{ i }}/">{{ i }}</a></td>
+      <td class="has-text-right">{{ stats_data[i]['gold'] }}</td>
+      <td class="has-text-right">{{ stats_data[i]['silver'] }}</td>
+      <td>
+      {% for i in range(1, stats_data[i]['gold_for_graph'] + 1) %}
+      <span class="star star_2">*</span>
+      {% endfor %} 
+      {% for i in range(1, stats_data[i]['silver_for_graph'] + 1) %}
+      <span class="star star_1">*</span>
+      {% endfor %} 
+      </td>
+    {% else %}
+      <td class="has-text-right">{{ i }}</td>
+      <td class="has-text-right"></td>
+      <td class="has-text-right"></td>
+      <td></td>
+    {% endif %}
     </tr>
-    {% endfor %}
+  {% endfor %}
   </tbody>
 </table>
-
-<br/>
-<h2 class="subtitle">First star</h2>
-
-<table class="table is-bordered">
-  <thead>
-    <tr>
-      <th>#</th>
-      <th>Timestamp</th>
-      <th>User</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for row in first_star_data %}
-    <tr>
-      <td>{{ loop.index }}</td>
-      <td>{{ row['date_time_eastern_time_zone'] }}</td>
-      <td><a href="../../user/{{ row['user_id'] }}/">{{ row['user_name'] }}</a></td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-
 
     </div>
   </section>

@@ -1,6 +1,7 @@
 #!/usr/local/bin/python
 
 import os
+import math
 import shutil
 import json
 import sys
@@ -170,6 +171,54 @@ def get_year_data(file_name, year):
         conn.close()
 
         return data_array
+
+    except sqlite3.Error as e:
+        print(f"Error retrieving data: {e}")
+        return None
+
+def get_stats_data(file_name, year):
+
+    stats_data = {}
+
+    for day in  get_days_in_year(year):
+        stats_data[day] = { "gold" : 0, "silver": 0, "total": 0}
+
+    try:
+        conn = sqlite3.connect(file_name)
+        cursor = conn.cursor()
+
+        cursor.execute('''
+            SELECT day, task FROM tasks
+            WHERE year = ?
+        ''', (year,))
+
+        rows = cursor.fetchall()
+
+        for row in rows:
+            day = int(row[0])
+            task = int(row[1])
+            if task == 1:
+                stats_data[day]['total'] += 1
+            elif task == 2:
+                stats_data[day]['gold'] += 1
+
+        max_total_stars = 0
+        for day in stats_data:
+            stats_data[day]['silver'] = stats_data[day]['total'] - stats_data[day]['gold']
+            if stats_data[day]['total'] > max_total_stars:
+                max_total_stars = stats_data[day]['total'] 
+
+        users_in_one_star = math.ceil(max_total_stars / 41)
+
+        for day in stats_data:
+            stats_data[day]['silver_for_graph'] = math.ceil(stats_data[day]['silver'] / users_in_one_star)
+            stats_data[day]['gold_for_graph'] = math.ceil(stats_data[day]['gold'] / users_in_one_star)
+
+        stats_data['users_in_one_star'] = users_in_one_star
+
+        conn.close()
+
+        return stats_data
 
     except sqlite3.Error as e:
         print(f"Error retrieving data: {e}")
@@ -427,6 +476,7 @@ if __name__ == '__main__':
         log_message('Working on year ' + str(year))
         days = get_days_in_year(year)
         create_file_from_jinja('/app/src/year.jinja2', '/output/' + str(year) + '/index.html', {'current_year':year,'reversed_years':reversed_years, "year_data": get_year_data(db_file_name, year), 'days': days})
+        create_file_from_jinja('/app/src/stats.jinja2', '/output/' + str(year) + '/stats/index.html', {'current_year':year,'reversed_years':reversed_years, 'days': days, 'stats_data':get_stats_data(db_file_name, year)})
 
         for day in days:
             create_file_from_jinja('/app/src/day.jinja2', '/output/' + str(year) + '/' + str(day) + '/index.html', {'current_year':year,'current_day':day, 'reversed_years':reversed_years, 'days': days, 'first_star_data':get_day_data(db_file_name, user_id2user_name, year, day, 1), 'second_star_data':get_day_data(db_file_name, user_id2user_name, year, day, 2)})
