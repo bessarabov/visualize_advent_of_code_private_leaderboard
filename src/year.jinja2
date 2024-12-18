@@ -10,6 +10,24 @@
       body {
         font-variant-numeric: tabular-nums;
       }
+
+      .star {
+        font-family: monospace;
+        font-size: 1.5em;
+        line-height: 10px !important;
+      }
+
+      .star_0 {
+        color: #E5E5E5;
+      }
+
+      .star_1 {
+        color: #A0A0A0;
+      }
+
+      .star_2 {
+        color: #FFD700;
+      }
     </style>
 
   </head>
@@ -64,6 +82,7 @@
       <th>User</th>
       <th>Stars</th>
       <th>Score</th>
+      <th>Stars</th>
     </tr>
   </thead>
   <tbody>
@@ -72,6 +91,26 @@
       <td><a href="../user/{{ row['user_id'] }}/">{{ row['user_name'] }}</a></td>
       <td class="has-text-right">{{ row['stars'] }}</td>
       <td class="has-text-right">{{ row['score'] }}</td>
+      <td>
+          {% for star_index in range(row['days']|length) %}
+          <a href="../../{{ row['year'] }}/{{ star_index + 1 }}/" class="star star_{{ row['days'][star_index] }}"
+          title="
+            {%- if row['days'][star_index] == 0 -%}
+            No stars
+            {%- elif row['days'][star_index] == 1 -%}
+            One star
+            {%- elif row['days'][star_index] == 2 -%}
+            Two stars
+            {%- endif -%}
+          ">
+            {%- if row['days'][star_index] == 0 -%}
+            -
+            {%- else -%}
+            *
+            {%- endif -%}
+          </a>
+          {% endfor %}
+      </td>
     </tr>
     {% endfor %}
   </tbody>

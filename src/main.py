@@ -161,7 +161,8 @@ def get_year_data(file_name, year):
                 'user_id': row[1],
                 'user_name': row[2],
                 'stars': row[3],
-                'score': row[4]
+                'score': row[4],
+                'days': get_days_for_year_user_id(db_file_name, row[0], row[1]),
             }
             data_array.append(row_dict)
 
