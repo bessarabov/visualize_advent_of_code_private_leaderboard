@@ -65,6 +65,7 @@ Task: <a href="https://adventofcode.com/{{ current_year }}/day/{{ current_day }}
 <table class="table is-bordered">
   <thead>
     <tr>
+      <th>#</th>
       <th>Timestamp</th>
       <th>Time from first star</th>
       <th>User</th>
@@ -73,6 +74,7 @@ Task: <a href="https://adventofcode.com/{{ current_year }}/day/{{ current_day }}
   <tbody>
     {% for row in second_star_data %}
     <tr>
+      <td>{{ loop.index }}</td>
       <td>{{ row['date_time_eastern_time_zone'] }}</td>
       <td class="has-text-right">{{ row['time_from_first_star'] }}</td>
       <td><a href="../../user/{{ row['user_id'] }}/">{{ row['user_name'] }}</a></td>
@@ -87,6 +89,7 @@ Task: <a href="https://adventofcode.com/{{ current_year }}/day/{{ current_day }}
 <table class="table is-bordered">
   <thead>
     <tr>
+      <th>#</th>
       <th>Timestamp</th>
       <th>User</th>
     </tr>
@@ -94,6 +97,7 @@ Task: <a href="https://adventofcode.com/{{ current_year }}/day/{{ current_day }}
   <tbody>
     {% for row in first_star_data %}
     <tr>
+      <td>{{ loop.index }}</td>
       <td>{{ row['date_time_eastern_time_zone'] }}</td>
       <td><a href="../../user/{{ row['user_id'] }}/">{{ row['user_name'] }}</a></td>
     </tr>
