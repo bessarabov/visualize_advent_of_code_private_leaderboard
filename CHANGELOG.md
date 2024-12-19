@@ -1,6 +1,10 @@
 # Changelog for visualize_advent_of_code_private_leaderboard
 
 ```
+1.2.1   2024-12-19
+        [Patch]
+        * Fixing link from star icon on the page /YYYY/
+
 1.2.0   2024-12-18
         [Minor]
         * /YYYY/stats/
