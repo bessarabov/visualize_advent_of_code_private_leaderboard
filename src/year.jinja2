@@ -98,7 +98,7 @@
       <td class="has-text-right">{{ row['score'] }}</td>
       <td>
           {% for star_index in range(row['days']|length) %}
-          <a href="../../{{ row['year'] }}/{{ star_index + 1 }}/" class="star star_{{ row['days'][star_index] }}"
+          <a href="../{{ row['year'] }}/{{ star_index + 1 }}/" class="star star_{{ row['days'][star_index] }}"
           title="
             {%- if row['days'][star_index] == 0 -%}
             No stars
