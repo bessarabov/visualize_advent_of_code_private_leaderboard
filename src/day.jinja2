@@ -70,20 +70,31 @@ Task: <a href="https://adventofcode.com/{{ current_year }}/day/{{ current_day }}
   <thead>
     <tr>
       <th>#</th>
-      <th>First star</th>
-      <th>Second star</th>
-      <th>Time from first star</th>
-      <th>User</th>
+      <th class="is-clickable" data-sort-col="1">First star <span class="sort-arrow">▲</span></th>
+      <th class="is-clickable" data-sort-col="2">Second star <span class="sort-arrow">▲</span></th>
+      <th class="is-clickable" data-sort-col="3">Time from first star <span class="sort-arrow">▲</span></th>
+      <th class="is-clickable" data-sort-col="4">User <span class="sort-arrow">▲</span></th>
     </tr>
   </thead>
   <tbody>
     {% for row in day_combined_data %}
     <tr>
-      <td>{{ loop.index }}</td>
-      <td>{{ row['first_date_time_eastern_time_zone'] }}</td>
-      <td>{{ row['second_date_time_eastern_time_zone'] }}</td>
-      <td class="has-text-right">{{ row['time_from_first_star'] }}</td>
-      <td><a href="../../user/{{ row['user_id'] }}/">{{ row['user_name'] }}</a></td>
+      <td class="row-index">{{ loop.index }}</td>
+      <td data-sort="{{ row['first_timestamp']|int }}">{{ row['first_date_time_eastern_time_zone'] }}</td>
+
+      {% if row['second_timestamp'] is not none %}
+      <td data-sort="{{ row['second_timestamp']|int }}">{{ row['second_date_time_eastern_time_zone'] }}</td>
+      {% else %}
+      <td data-sort="9999999999"></td>
+      {% endif %}
+
+      <td class="has-text-right"
+          data-sort="{% if row['second_timestamp'] is not none %}{{ (row['second_timestamp'] - row['first_timestamp'])|int }}{% else %}{{ 999999999 }}{% endif %}">
+        {{ row['time_from_first_star'] }}
+      </td>
+      <td data-sort="{{ row['user_name']|lower }}">
+        <a href="../../user/{{ row['user_id'] }}/">{{ row['user_name'] }}</a>
+      </td>
     </tr>
     {% endfor %}
   </tbody>
@@ -99,6 +110,111 @@ Task: <a href="https://adventofcode.com/{{ current_year }}/day/{{ current_day }}
     <p><a href="https://github.com/bessarabov/visualize_advent_of_code_private_leaderboard">GitHub</a></p>
   </div>
 </footer>
+
+<script>
+(function () {
+  const table = document.querySelector('table.table');
+  if (!table) return;
+  const thead = table.tHead;
+  const tbody = table.tBodies[0];
+  if (!thead || !tbody) return;
+
+  function renumber() {
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    rows.forEach((tr, i) => {
+      const cell = tr.querySelector('td.row-index');
+      if (cell) cell.textContent = String(i + 1);
+    });
+  }
+
+  // Basic styles hook for clickable headers
+  const style = document.createElement('style');
+  style.textContent = `
+    th.is-clickable { cursor: pointer; user-select: none; }
+    th .sort-arrow { font-size: 0.8em; margin-left: 0.25rem; color: #fff; }
+    th[data-sort-dir] .sort-arrow { color: inherit; }
+  `;
+  document.head.appendChild(style);
+
+  function getKey(td) {
+    const v = td.getAttribute('data-sort');
+    return v !== null ? v : td.textContent.trim();
+  }
+
+  // Natural compare: case-insensitive, numbers compared numerically
+  function naturalCmp(a, b) {
+    const ax = [];
+    const bx = [];
+    const re = /(\d+|\D+)/g;
+    String(a).toLowerCase().match(re)?.forEach(s => ax.push(isFinite(s) ? Number(s) : s));
+    String(b).toLowerCase().match(re)?.forEach(s => bx.push(isFinite(s) ? Number(s) : s));
+    const len = Math.max(ax.length, bx.length);
+    for (let i = 0; i < len; i++) {
+      if (i >= ax.length) return -1;
+      if (i >= bx.length) return 1;
+      const av = ax[i], bv = bx[i];
+      if (av === bv) continue;
+      if (typeof av === 'number' && typeof bv === 'number') return av - bv;
+      return String(av).localeCompare(String(bv));
+    }
+    return 0;
+  }
+
+  function clearArrows(exceptTh) {
+    thead.querySelectorAll('th').forEach(th => {
+      if (th !== exceptTh) {
+        th.removeAttribute('data-sort-dir');
+        const span = th.querySelector('.sort-arrow');
+        if (span) span.textContent = '▲';
+      }
+    });
+  }
+
+  function setArrow(th, dir) {
+    const span = th.querySelector('.sort-arrow');
+    if (!span) return;
+    span.textContent = dir === 'asc' ? '▲' : '▼';
+  }
+
+  thead.addEventListener('click', (ev) => {
+    const th = ev.target.closest('th[data-sort-col]');
+    if (!th) return;
+
+    const col = parseInt(th.getAttribute('data-sort-col'), 10);
+    const currentDir = th.getAttribute('data-sort-dir'); // null on first click
+    const newDir = currentDir ? (currentDir === 'asc' ? 'desc' : 'asc') : 'asc';
+
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    const withKeys = rows.map(tr => {
+      const td = tr.children[col];
+      return { tr, key: getKey(td) };
+    });
+
+    withKeys.sort((r1, r2) => {
+      const res = naturalCmp(r1.key, r2.key);
+      return newDir === 'asc' ? res : -res;
+    });
+
+    const frag = document.createDocumentFragment();
+    withKeys.forEach(r => frag.appendChild(r.tr));
+    tbody.appendChild(frag);
+    renumber();
+
+    clearArrows(th);
+    th.setAttribute('data-sort-dir', newDir);
+    setArrow(th, newDir);
+  });
+  renumber();
+
+  // Default sort indicator on "First star"
+  const defaultTh = thead.querySelector('th[data-sort-col="1"]');
+  if (defaultTh) {
+    defaultTh.setAttribute('data-sort-dir', 'asc'); // activates arrow color without width jump
+    setArrow(defaultTh, 'asc'); // shows ▲ using normal color
+  }
+})();
+</script>
+
 
   </body>
 </html>
