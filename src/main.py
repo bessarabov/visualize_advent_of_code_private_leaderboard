@@ -208,7 +208,7 @@ def get_stats_data(file_name, year):
             if stats_data[day]['total'] > max_total_stars:
                 max_total_stars = stats_data[day]['total']
 
-        users_in_one_star = math.ceil(max_total_stars / 41)
+        users_in_one_star = max(1, math.ceil(max_total_stars / 41))
 
         for day in stats_data:
             stats_data[day]['silver_for_graph'] = math.ceil(stats_data[day]['silver'] / users_in_one_star)
