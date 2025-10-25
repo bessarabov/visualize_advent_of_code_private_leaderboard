@@ -367,10 +367,12 @@ def get_day_data(db_file_name, user_id2user_name, year, day, task):
 def get_days_in_year(year):
     now = get_dt_now_eastern_time_zone()
 
-    if now.year == year:
-        return list(range(1, min(now.day+1,26)))
+    max_days = 13 if year >= 2025 else 26
+
+    if now.year == year and now.month == 12:
+        return list(range(1, min(now.day + 1, max_days)))
     else:
-        return list(range(1, 26))
+        return list(range(1, max_days))
 
 def get_user_id_to_user_name_map(db_file_name):
     try:
