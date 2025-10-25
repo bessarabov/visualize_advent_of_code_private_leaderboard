@@ -113,12 +113,12 @@ def get_human_time_from_seconds(seconds):
         return f"{days}d {hours:02d}:{minutes:02d}:{seconds:02d}"
     else:
         return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
-    
+
 def get_data_from_json_file(file_name):
     with open(file_name, 'r') as file:
         data = json.load(file)
     return data
-    
+
 def get_data_from_sqlite(db_file_name, sql_query, parameters=None):
     try:
         conn = sqlite3.connect(db_file_name)  # Connect to the SQLite database
@@ -206,7 +206,7 @@ def get_stats_data(file_name, year):
         for day in stats_data:
             stats_data[day]['silver'] = stats_data[day]['total'] - stats_data[day]['gold']
             if stats_data[day]['total'] > max_total_stars:
-                max_total_stars = stats_data[day]['total'] 
+                max_total_stars = stats_data[day]['total']
 
         users_in_one_star = math.ceil(max_total_stars / 41)
 
@@ -256,7 +256,7 @@ def get_user_task_data(db_file_name, user_id):
     rows = get_data_from_sqlite(db_file_name, sql_query, parameters)
 
     first_task_to_timestamp = {}
-    
+
     if rows is not None:
         user_year_data = []
         for row in rows:
@@ -268,7 +268,7 @@ def get_user_task_data(db_file_name, user_id):
                 'task': row[3]
             }
 
-            key = str(row[1]) + "_" + str(row[2]) 
+            key = str(row[1]) + "_" + str(row[2])
             if row[3] == 1:
                 first_task_to_timestamp[key] = row[0]
             if row[3] == 2:
@@ -344,7 +344,7 @@ def get_day_data(db_file_name, user_id2user_name, year, day, task):
 
     if task == 2:
         user_id_to_timestamp_map = {}
-        first_task_rows = get_data_from_sqlite(db_file_name, sql_query, (year, day, 1)) 
+        first_task_rows = get_data_from_sqlite(db_file_name, sql_query, (year, day, 1))
         for row in first_task_rows:
             user_id_to_timestamp_map[row[1]] = row[0]
 
@@ -369,7 +369,7 @@ def get_days_in_year(year):
 
     if now.year == year:
         return list(range(1, min(now.day+1,26)))
-    else: 
+    else:
         return list(range(1, 26))
 
 def get_user_id_to_user_name_map(db_file_name):
@@ -405,12 +405,12 @@ def get_date_time_eastern_time_zone(timestamp):
 
     et = pytz.timezone('US/Eastern')
 
-    str = dt.astimezone(et).isoformat() 
+    str = dt.astimezone(et).isoformat()
     str = str.replace('T', ' ')
     str = str.replace('-04:00', ' -04:00')
     str = str.replace('-05:00', ' -05:00')
 
-    return str 
+    return str
 
 def get_dt_now_eastern_time_zone():
 

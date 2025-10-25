@@ -111,10 +111,10 @@ One star represent up to {{ stats_data.users_in_one_star }} users.
       <td>
       {% for i in range(1, stats_data[i]['gold_for_graph'] + 1) %}
       <span class="star star_2">*</span>
-      {% endfor %} 
+      {% endfor %}
       {% for i in range(1, stats_data[i]['silver_for_graph'] + 1) %}
       <span class="star star_1">*</span>
-      {% endfor %} 
+      {% endfor %}
       </td>
     {% else %}
       <td class="has-text-right">{{ i }}</td>
