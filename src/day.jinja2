@@ -65,45 +65,24 @@ Task: <a href="https://adventofcode.com/{{ current_year }}/day/{{ current_day }}
 </p>
 
 <br/>
-<h2 class="subtitle">Second star</h2>
 
 <table class="table is-bordered">
   <thead>
     <tr>
       <th>#</th>
-      <th>Timestamp</th>
+      <th>First star</th>
+      <th>Second star</th>
       <th>Time from first star</th>
       <th>User</th>
     </tr>
   </thead>
   <tbody>
-    {% for row in second_star_data %}
+    {% for row in day_combined_data %}
     <tr>
       <td>{{ loop.index }}</td>
-      <td>{{ row['date_time_eastern_time_zone'] }}</td>
+      <td>{{ row['first_date_time_eastern_time_zone'] }}</td>
+      <td>{{ row['second_date_time_eastern_time_zone'] }}</td>
       <td class="has-text-right">{{ row['time_from_first_star'] }}</td>
-      <td><a href="../../user/{{ row['user_id'] }}/">{{ row['user_name'] }}</a></td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-
-<br/>
-<h2 class="subtitle">First star</h2>
-
-<table class="table is-bordered">
-  <thead>
-    <tr>
-      <th>#</th>
-      <th>Timestamp</th>
-      <th>User</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for row in first_star_data %}
-    <tr>
-      <td>{{ loop.index }}</td>
-      <td>{{ row['date_time_eastern_time_zone'] }}</td>
       <td><a href="../../user/{{ row['user_id'] }}/">{{ row['user_name'] }}</a></td>
     </tr>
     {% endfor %}

@@ -364,6 +364,51 @@ def get_day_data(db_file_name, user_id2user_name, year, day, task):
     else:
         return None
 
+def get_day_combined_data(db_file_name, user_id2user_name, year, day):
+    # First stars ordered by timestamp
+    first_rows = get_data_from_sqlite(
+        db_file_name,
+        '''
+            SELECT timestamp, user_id
+            FROM tasks
+            WHERE year = ? AND day = ? AND task = 1
+            ORDER BY timestamp
+        ''',
+        (year, day)
+    ) or []
+
+    # Second stars mapped by user_id
+    second_rows = get_data_from_sqlite(
+        db_file_name,
+        '''
+            SELECT timestamp, user_id
+            FROM tasks
+            WHERE year = ? AND day = ? AND task = 2
+        ''',
+        (year, day)
+    ) or []
+
+    user_to_second_ts = {row[1]: row[0] for row in second_rows}
+
+    combined = []
+    for ts_first, user_id in first_rows:
+        row = {
+            'user_id': user_id,
+            'user_name': user_id2user_name[user_id],
+            'first_timestamp': ts_first,
+            'first_date_time_eastern_time_zone': get_date_time_eastern_time_zone(ts_first),
+            'second_timestamp': None,
+            'second_date_time_eastern_time_zone': '',
+            'time_from_first_star': '',
+        }
+        ts_second = user_to_second_ts.get(user_id)
+        if ts_second is not None:
+            row['second_timestamp'] = ts_second
+            row['second_date_time_eastern_time_zone'] = get_date_time_eastern_time_zone(ts_second)
+            row['time_from_first_star'] = get_human_time_from_seconds(int(ts_second) - int(ts_first))
+        combined.append(row)
+    return combined
+
 def get_days_in_year(year):
     now = get_dt_now_eastern_time_zone()
 
@@ -481,7 +526,17 @@ if __name__ == '__main__':
         create_file_from_jinja('/app/src/stats.jinja2', '/output/' + str(year) + '/stats/index.html', {'current_year':year,'reversed_years':reversed_years, 'days': days, 'stats_data':get_stats_data(db_file_name, year)})
 
         for day in days:
-            create_file_from_jinja('/app/src/day.jinja2', '/output/' + str(year) + '/' + str(day) + '/index.html', {'current_year':year,'current_day':day, 'reversed_years':reversed_years, 'days': days, 'first_star_data':get_day_data(db_file_name, user_id2user_name, year, day, 1), 'second_star_data':get_day_data(db_file_name, user_id2user_name, year, day, 2)})
+            create_file_from_jinja(
+                '/app/src/day.jinja2',
+                '/output/' + str(year) + '/' + str(day) + '/index.html',
+                {
+                    'current_year': year,
+                    'current_day': day,
+                    'reversed_years': reversed_years,
+                    'days': days,
+                    'day_combined_data': get_day_combined_data(db_file_name, user_id2user_name, year, day),
+                }
+            )
 
     log_message('Working on users')
     for user_id in get_distinct_user_ids(db_file_name):
