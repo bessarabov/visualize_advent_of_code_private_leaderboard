@@ -1,6 +1,13 @@
 # Changelog for visualize_advent_of_code_private_leaderboard
 
 ```
+1.3.0   2025-10-25
+        [Minor]
+        Starting year 2025 there will be 12 days instead of 25 (HEAD -> master) ivan@bessarabov.ru
+
+        [Patch]
+        Fix for the situation when there are no solved tasks in the upcoming event ivan
+
 1.2.1   2024-12-19
         [Patch]
         * Fixing link from star icon on the page /YYYY/
