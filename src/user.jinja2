@@ -44,6 +44,34 @@
   <section class="section">
     <div class="container">
 
+      <!-- Years tabs + Users (Users selected) -->
+      <div class="tabs is-boxed">
+        <ul>
+          {% for year in reversed_years %}
+          <li>
+            <a href="../../{{ year }}/">
+              <span>{{ year }}</span>
+            </a>
+          </li>
+          {% endfor %}
+          <li class="is-active">
+            <a><span>Users</span></a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Second tabs: All + current user (active) -->
+      <div class="tabs is-boxed">
+        <ul>
+          <li>
+            <a href="../../users/"><span>All</span></a>
+          </li>
+          <li class="is-active">
+            <a><span>{{ user_name }}</span></a>
+          </li>
+        </ul>
+      </div>
+
       <h2 class="subtitle">{{ user_name }} ({{ user_id }})</h2>
 
 <table class="table is-bordered">

@@ -570,6 +570,15 @@ if __name__ == '__main__':
     )
 
     for user_id in get_distinct_user_ids(db_file_name):
-        create_file_from_jinja('/app/src/user.jinja2', '/output/user/' + str(user_id) + '/index.html', { 'user_id': user_id, 'user_name': user_id2user_name[user_id], 'user_year_data': get_user_year_data(db_file_name, user_id), 'user_task_data': get_user_task_data(db_file_name, user_id)})
+        create_file_from_jinja(
+            '/app/src/user.jinja2',
+            '/output/user/' + str(user_id) + '/index.html',
+            {
+                'reversed_years': reversed_years,
+                'user_id': user_id,
+                'user_name': user_id2user_name[user_id],
+                'user_year_data': get_user_year_data(db_file_name, user_id),
+                'user_task_data': get_user_task_data(db_file_name, user_id),
+            })
 
     log_message('Finished')
