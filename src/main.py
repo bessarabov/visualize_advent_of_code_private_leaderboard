@@ -467,6 +467,26 @@ def get_dt_now_eastern_time_zone():
 
     return dt.astimezone(et)
 
+def get_users_totals(db_file_name):
+    """
+    Returns list of dicts: {user_id, user_name, total_stars}
+    """
+    rows = get_data_from_sqlite(
+        db_file_name,
+        '''
+        SELECT user_id,
+               MIN(user_name) AS user_name,
+               SUM(stars)      AS total_stars
+        FROM years
+        GROUP BY user_id
+        ORDER BY total_stars DESC, user_name ASC
+        '''
+    ) or []
+    return [
+        {'user_id': r[0], 'user_name': r[1], 'total_stars': r[2]}
+        for r in rows
+    ]
+
 if __name__ == '__main__':
     log_message('Started visualize_advent_of_code_private_leaderboard:' + VERSION)
 
@@ -539,6 +559,16 @@ if __name__ == '__main__':
             )
 
     log_message('Working on users')
+
+    create_file_from_jinja(
+        '/app/src/users.jinja2',
+        '/output/users/index.html',
+        {
+            'reversed_years': reversed_years,
+            'users': get_users_totals(db_file_name)
+        }
+    )
+
     for user_id in get_distinct_user_ids(db_file_name):
         create_file_from_jinja('/app/src/user.jinja2', '/output/user/' + str(user_id) + '/index.html', { 'user_id': user_id, 'user_name': user_id2user_name[user_id], 'user_year_data': get_user_year_data(db_file_name, user_id), 'user_task_data': get_user_task_data(db_file_name, user_id)})
 

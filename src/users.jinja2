@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AoC</title>
+    <link rel="stylesheet" href="../static/bulma.min.css">
+    <style>
+      body { font-variant-numeric: tabular-nums; }
+    </style>
+  </head>
+  <body>
+
+<nav class="navbar" role="navigation" aria-label="main navigation">
+  <div class="navbar-brand">
+    <a class="navbar-item" href="../">
+      <h1 class="title">AoC</h1>
+    </a>
+  </div>
+</nav>
+
+<section class="section">
+  <div class="container">
+
+    <!-- Years tabs + Users -->
+    <div class="tabs is-boxed">
+      <ul>
+        {% for year in reversed_years %}
+        <li>
+          <a href="../{{ year }}/">
+            <span>{{ year }}</span>
+          </a>
+        </li>
+        {% endfor %}
+        <li class="is-active">
+          <a><span>Users</span></a>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Second tabs: single 'All' -->
+    <div class="tabs is-boxed">
+      <ul>
+        <li class="is-active"><a><span>All</span></a></li>
+      </ul>
+    </div>
+
+    <h2 class="subtitle">Users</h2>
+
+    <table class="table is-bordered">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>User</th>
+          <th class="has-text-right">Total stars</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td class="has-text-right">{{ loop.index }}</td>
+          <td><a href="../user/{{ u.user_id }}/">{{ u.user_name }}</a></td>
+          <td class="has-text-right">{{ u.total_stars }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="content has-text-centered">
+    <p>Version: dev</p>
+    <p><a href="https://github.com/bessarabov/visualize_advent_of_code_private_leaderboard">GitHub</a></p>
+  </div>
+</footer>
+
+  </body>
+</html>
