@@ -1,6 +1,10 @@
 # Changelog for visualize_advent_of_code_private_leaderboard
 
 ```
+1.5.0   2025-10-26
+        [Minor]
+        * New page with all users
+        * Showing tabs on user page
 
 1.4.0   2025-10-25
         [Minor]
