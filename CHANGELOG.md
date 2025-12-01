@@ -1,6 +1,10 @@
 # Changelog for visualize_advent_of_code_private_leaderboard
 
 ```
+1.6.1   2025-12-01
+        [Patch]
+        * Fixing table sort
+
 1.6.0   2025-12-01
         [Minor]
         * Graph page
