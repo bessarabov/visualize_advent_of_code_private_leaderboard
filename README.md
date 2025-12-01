@@ -25,6 +25,7 @@ input/
 ├── 2022.json
 ├── 2023.json
 └── 2024.json
+└── 2025.json
 ```
 
 Next you need to create a directory to store generated HTML files:
@@ -40,6 +41,6 @@ $ docker run \
     --rm \
     -v `pwd`/input/:/input/ \
     -v `pwd`/output/:/output/ \
-    bessarabov/visualize_advent_of_code_private_leaderboard:1.5.0 \
+    bessarabov/visualize_advent_of_code_private_leaderboard:1.6.0 \
     ;
 ```

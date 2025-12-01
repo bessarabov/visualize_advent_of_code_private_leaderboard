@@ -1,6 +1,10 @@
 # Changelog for visualize_advent_of_code_private_leaderboard
 
 ```
+1.6.0   2025-12-01
+        [Minor]
+        * Graph page
+
 1.5.0   2025-10-26
         [Minor]
         * New page with all users
