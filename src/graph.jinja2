@@ -124,7 +124,7 @@
         </tr>
       </thead>
       <tbody>
-        {% for row in year_data %}
+        {% for row in year_data if row['stars'] > 0 %}
         <tr data-user-id="{{ row['user_id'] }}">
           <td>
             <a href="../../user/{{ row['user_id'] }}/">{{ row['user_name'] }}</a>
