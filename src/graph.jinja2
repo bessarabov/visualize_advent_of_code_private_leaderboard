@@ -131,13 +131,16 @@
           </td>
           <td class="has-text-right">{{ row['stars'] }}</td>
           <td class="has-text-right">{{ row['score'] }}</td>
-          <td class="has-text-centered">
-            <input
-              type="checkbox"
-              class="graph-select"
-              data-user-id="{{ row['user_id'] }}"
-              {% if loop.index <= 5 %}checked{% endif %}
-            />
+          <td class="has-text-centered" style="padding: 0;">
+            <label style="display: block; width: 100%; height: 100%; cursor: pointer; padding-top: 0.5rem; padding-bottom: 0.5rem;">
+              <input
+                type="checkbox"
+                class="graph-select"
+                data-user-id="{{ row['user_id'] }}"
+                style="cursor: pointer;"
+                {% if loop.index <= 5 %}checked{% endif %}
+              />
+            </label>
           </td>
           <td class="has-text-centered">
             <input
