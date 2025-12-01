@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AoC</title>
+    <link rel="stylesheet" href="../../static/bulma.min.css">
+
+    <style>
+      body {
+        font-variant-numeric: tabular-nums;
+      }
+
+      .aoc-graph {
+        width: 100%;
+        height: 320px;
+        border: 1px solid #ddd;
+        background: #fafafa;
+      }
+
+      .graph-controls {
+        margin-bottom: 1rem;
+      }
+
+      .axis-line {
+        stroke: #444;
+        stroke-width: 1;
+      }
+
+      .grid-line-x {
+        stroke: #ddd;
+        stroke-width: 1;
+        stroke-dasharray: 2 2;
+      }
+
+      .axis-tick {
+        stroke: #444;
+        stroke-width: 1;
+      }
+
+      .axis-label {
+        font-size: 10px;
+        fill: #444;
+      }
+    </style>
+
+  </head>
+  <body>
+
+<nav class="navbar" role="navigation" aria-label="main navigation">
+  <div class="navbar-brand">
+    <a class="navbar-item" href="../../">
+      <h1 class="title">AoC</h1>
+    </a>
+  </div>
+</nav>
+
+<section class="section">
+  <div class="container">
+
+    <div class="tabs is-boxed">
+      <ul>
+        {% for year in reversed_years %}
+        <li {% if year == current_year %}class="is-active"{% endif %}>
+          <a href="../../{{ year }}/graph/">
+            <span>{{ year }}</span>
+          </a>
+        </li>
+        {% endfor %}
+        <li>
+          <a href="../../users/"><span>Users</span></a>
+        </li>
+      </ul>
+    </div>
+
+    <div class="tabs is-boxed">
+      <ul>
+        <li>
+          <a href="../">
+            <span>Summary</span>
+          </a>
+        </li>
+        {% for day in days %}
+        <li>
+          <a href="../{{ day }}/">
+            <span>{{ day }}</span>
+          </a>
+        </li>
+        {% endfor %}
+        <li>
+          <a href="../stats/">
+            <span>Stats</span>
+          </a>
+        </li>
+        <li class="is-active">
+          <a>
+            <span>Graph</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <svg
+      id="aoc-graph"
+      class="aoc-graph"
+      viewBox="0 0 1000 400"
+      preserveAspectRatio="none"
+      data-start-ts="{{ graph_start_ts }}"
+      data-end-ts="{{ graph_end_ts }}"
+    ></svg>
+
+    <br/>
+
+    <h2 class="subtitle">Users</h2>
+
+    <table class="table is-bordered">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th class="has-text-right">Stars</th>
+          <th class="has-text-right">Score</th>
+          <th class="has-text-centered">Selected</th>
+          <th class="has-text-centered">Color</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in year_data %}
+        <tr data-user-id="{{ row['user_id'] }}">
+          <td>
+            <a href="../../user/{{ row['user_id'] }}/">{{ row['user_name'] }}</a>
+          </td>
+          <td class="has-text-right">{{ row['stars'] }}</td>
+          <td class="has-text-right">{{ row['score'] }}</td>
+          <td class="has-text-centered">
+            <input
+              type="checkbox"
+              class="graph-select"
+              data-user-id="{{ row['user_id'] }}"
+              {% if loop.index <= 5 %}checked{% endif %}
+            />
+          </td>
+          <td class="has-text-centered">
+            <input
+              type="color"
+              class="graph-color"
+              data-user-id="{{ row['user_id'] }}"
+            />
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="content has-text-centered">
+    <p>Version: dev</p>
+    <p><a href="https://github.com/bessarabov/visualize_advent_of_code_private_leaderboard">GitHub</a></p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  const GRAPH_EVENTS = {{ graph_events_json|safe }};
+  const GRAPH_START_TS = {{ graph_start_ts }};
+  const GRAPH_END_TS = {{ graph_end_ts }};
+  const GRAPH_DAYS_COUNT = {{ graph_days_count }};
+  const Y_MAX = ({{ current_year }} >= 2025 ? 24 : 50);
+
+  const svg = document.getElementById('aoc-graph');
+  if (!svg) return;
+
+  const width = 1000;
+  const height = 400;
+  const paddingX = 50;
+  const paddingY = 20;
+
+  // Deterministic colors
+  const PRESET_COLORS = [
+    '#1f77b4', // 1
+    '#ff7f0e', // 2
+    '#2ca02c', // 3
+    '#d62728', // 4
+    '#9467bd', // 5
+    '#8c564b', // 6
+    '#e377c2', // 7
+    '#7f7f7f', // 8
+    '#bcbd22', // 9
+    '#17becf'  // 10
+  ];
+
+  function hslToHex(h, s, l) {
+    s /= 100;
+    l /= 100;
+    const k = n => (n + h / 30) % 12;
+    const a = s * Math.min(l, 1 - l);
+    const f = n => {
+      const v = l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+      return Math.round(255 * v).toString(16).padStart(2, '0');
+    };
+    return '#' + f(0) + f(8) + f(4);
+  }
+
+  function defaultColorForIndex(index) {
+    if (index < PRESET_COLORS.length) {
+      return PRESET_COLORS[index];
+    }
+    const hue = (index * 47) % 360;
+    return hslToHex(hue, 65, 50);
+  }
+
+  const rows = Array.from(document.querySelectorAll('table.table tbody tr'));
+  const state = new Map(); // user_id (string) -> { selected: bool, color: string }
+
+  rows.forEach((tr, idx) => {
+    const userId = tr.getAttribute('data-user-id');
+    if (!userId) return;
+
+    const checkbox = tr.querySelector('input.graph-select');
+    const colorInput = tr.querySelector('input.graph-color');
+
+    const defaultColor = defaultColorForIndex(idx);
+
+    if (colorInput) {
+        colorInput.value = defaultColor;
+    }
+
+    state.set(String(userId), {
+      selected: checkbox ? checkbox.checked : false,
+      color: (colorInput && colorInput.value) || defaultColor,
+    });
+
+    if (checkbox) {
+      checkbox.addEventListener('change', function () {
+        const s = state.get(String(userId));
+        if (s) {
+          s.selected = checkbox.checked;
+        }
+        draw();
+      });
+    }
+
+    if (colorInput) {
+      colorInput.addEventListener('input', function () {
+        const s = state.get(String(userId));
+        if (s) {
+          s.color = colorInput.value;
+        }
+        draw();
+      });
+    }
+  });
+
+  function clearSvg() {
+    while (svg.firstChild) {
+      svg.removeChild(svg.firstChild);
+    }
+  }
+
+  function drawAxes(startTs, endTs) {
+    const range = Math.max(1, endTs - startTs);
+    const axisGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    axisGroup.setAttribute('class', 'axes');
+
+    const xAxisY = height - paddingY; // bottom
+    const yAxisX = paddingX;          // left
+
+    // X axis
+    const xAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    xAxis.setAttribute('x1', yAxisX);
+    xAxis.setAttribute('y1', xAxisY);
+    xAxis.setAttribute('x2', width - paddingX);
+    xAxis.setAttribute('y2', xAxisY);
+    xAxis.setAttribute('class', 'axis-line');
+    axisGroup.appendChild(xAxis);
+
+    // Y axis
+    const yAxis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    yAxis.setAttribute('x1', yAxisX);
+    yAxis.setAttribute('y1', paddingY);
+    yAxis.setAttribute('x2', yAxisX);
+    yAxis.setAttribute('y2', xAxisY);
+    yAxis.setAttribute('class', 'axis-line');
+    axisGroup.appendChild(yAxis);
+
+    // X axis: day starts (1..N)
+    const daySeconds = 24 * 60 * 60;
+    for (let d = 1; d <= GRAPH_DAYS_COUNT; d++) {
+      const ts = GRAPH_START_TS + (d - 1) * daySeconds;
+      if (ts < startTs || ts > endTs) continue;
+
+      const x = paddingX + ((ts - startTs) / range) * (width - 2 * paddingX);
+
+      // vertical grid line
+      const grid = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      grid.setAttribute('x1', x);
+      grid.setAttribute('y1', paddingY);
+      grid.setAttribute('x2', x);
+      grid.setAttribute('y2', xAxisY);
+      grid.setAttribute('class', 'grid-line-x');
+      axisGroup.appendChild(grid);
+
+      // tick
+      const tick = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      tick.setAttribute('x1', x);
+      tick.setAttribute('y1', xAxisY);
+      tick.setAttribute('x2', x);
+      tick.setAttribute('y2', xAxisY + 5);
+      tick.setAttribute('class', 'axis-tick');
+      axisGroup.appendChild(tick);
+
+      // label (day number)
+      const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      label.setAttribute('x', x);
+      label.setAttribute('y', xAxisY + 15);
+      label.setAttribute('text-anchor', 'middle');
+      label.setAttribute('class', 'axis-label');
+      label.textContent = String(d);
+      axisGroup.appendChild(label);
+    }
+
+    // Dynamic Y tick step:
+    // For years < 2025: 10 (0,10,20...50)
+    // For years >= 2025: 6  (0,6,12,18,24)
+    const step = ({{ current_year }} >= 2025 ? 6 : 10);
+
+    for (let v = 0; v <= Y_MAX; v += step) {
+        const ratio = v / Y_MAX; // 0 bottom, 1 top
+        const y = paddingY + (1 - ratio) * (height - 2 * paddingY);
+
+        const tick = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        tick.setAttribute('x1', yAxisX - 5);
+        tick.setAttribute('y1', y);
+        tick.setAttribute('x2', yAxisX);
+        tick.setAttribute('y2', y);
+        tick.setAttribute('class', 'axis-tick');
+        axisGroup.appendChild(tick);
+
+        const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        label.setAttribute('x', yAxisX - 8);
+        label.setAttribute('y', y + 3);
+        label.setAttribute('text-anchor', 'end');
+        label.setAttribute('class', 'axis-label');
+        label.textContent = String(v);
+        axisGroup.appendChild(label);
+    }
+
+    svg.appendChild(axisGroup);
+  }
+
+  function draw() {
+    clearSvg();
+
+    if (!Array.isArray(GRAPH_EVENTS) || !GRAPH_EVENTS.length) {
+      return;
+    }
+
+    const selectedIds = new Set(
+      Array.from(state.entries())
+        .filter(([, cfg]) => cfg.selected)
+        .map(([userId]) => userId)
+    );
+
+    const startTs = Number(GRAPH_START_TS);
+    const endTs = Number(GRAPH_END_TS);
+    const range = Math.max(1, endTs - startTs);
+
+    // If nothing selected, just draw axes for context and return
+    if (!selectedIds.size) {
+      drawAxes(startTs, endTs);
+      return;
+    }
+
+    // Filter to selected users and time range
+    const filtered = GRAPH_EVENTS.filter(ev => {
+      const uid = String(ev.user_id);
+      const ts = Number(ev.timestamp);
+      return selectedIds.has(uid) && ts >= startTs && ts <= endTs;
+    });
+
+    // Always draw axes (even if no points)
+    drawAxes(startTs, endTs);
+
+    if (!filtered.length) {
+      return;
+    }
+
+    // Sort by time, then user, then task
+    filtered.sort((a, b) => {
+      const ta = a.timestamp - b.timestamp;
+      if (ta !== 0) return ta;
+      const ua = a.user_id - b.user_id;
+      if (ua !== 0) return ua;
+      return a.task - b.task;
+    });
+
+    // Compute per-user star index (1..50) as Y value
+    const perUserCount = Object.create(null);
+    filtered.forEach(ev => {
+      const uid = String(ev.user_id);
+      const prev = perUserCount[uid] || 0;
+      const idxForUser = prev + 1;
+      perUserCount[uid] = idxForUser;
+      ev._yStars = idxForUser;
+    });
+
+    // Plot points
+    filtered.forEach(ev => {
+      const ts = Number(ev.timestamp);
+      const x = paddingX + ((ts - startTs) / range) * (width - 2 * paddingX);
+
+      const yStars = Math.max(0, Math.min(Y_MAX, ev._yStars || 0)); // clamp to [0,50]
+      const ratio = yStars / Y_MAX; // 0 bottom, 1 top
+      const y = paddingY + (1 - ratio) * (height - 2 * paddingY);
+
+      const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      circle.setAttribute('cx', x);
+      circle.setAttribute('cy', y);
+      circle.setAttribute('r', 3);
+
+      const cfg = state.get(String(ev.user_id));
+      circle.setAttribute('fill', (cfg && cfg.color) || '#000000');
+      circle.setAttribute('opacity', '0.8');
+
+      circle.setAttribute('data-user-name', ev.user_name || '');
+      circle.setAttribute('data-day', String(ev.day));
+      circle.setAttribute('data-task', String(ev.task));
+      circle.setAttribute('data-timestamp', String(ev.timestamp));
+      circle.setAttribute('data-user-stars', String(yStars));
+
+      svg.appendChild(circle);
+    });
+  }
+
+  draw();
+})();
+</script>
+
+</script>
+
+  </body>
+</html>
+
