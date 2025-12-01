@@ -153,7 +153,7 @@ Task: <a href="https://adventofcode.com/{{ current_year }}/day/{{ current_day }}
   function naturalCmp(a, b) {
     const ax = [];
     const bx = [];
-    const re = /(\\d+|\\D+)/g;
+    const re = /(\d+|\D+)/g;
     String(a).toLowerCase().match(re)?.forEach(s => ax.push(isFinite(s) ? Number(s) : s));
     String(b).toLowerCase().match(re)?.forEach(s => bx.push(isFinite(s) ? Number(s) : s));
     const len = Math.max(ax.length, bx.length);
