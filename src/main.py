@@ -447,24 +447,52 @@ def get_dt_now_eastern_time_zone():
     et = pytz.timezone('US/Eastern')
     return dt.astimezone(et)
 
-
 def get_users_totals(db_file_name):
     rows = get_data_from_sqlite(
         db_file_name,
         '''
-        SELECT user_id,
-               MIN(user_name) AS user_name,
-               SUM(stars)      AS total_stars
-        FROM years
-        GROUP BY user_id
+        SELECT
+            y.user_id,
+            MIN(y.user_name) AS user_name,
+            SUM(y.stars)     AS total_stars,
+            t_min.first_star_ts
+        FROM years y
+        LEFT JOIN (
+            SELECT
+                user_id,
+                MIN(timestamp) AS first_star_ts
+            FROM tasks
+            GROUP BY user_id
+        ) AS t_min
+          ON t_min.user_id = y.user_id
+        GROUP BY y.user_id
         ORDER BY total_stars DESC, user_name ASC
         '''
     ) or []
-    return [
-        {'user_id': r[0], 'user_name': r[1], 'total_stars': r[2]}
-        for r in rows
-    ]
 
+    users = []
+    for r in rows:
+        user_id = r[0]
+        user_name = r[1]
+        total_stars = r[2]
+        first_ts = r[3]
+
+        if first_ts is not None:
+            first_star_str = get_date_time_eastern_time_zone(int(first_ts))
+        else:
+            first_star_str = ''
+
+        users.append(
+            {
+                'user_id': user_id,
+                'user_name': user_name,
+                'total_stars': total_stars,
+                'first_star_ts': first_ts,
+                'first_star_date_time_eastern_time_zone': first_star_str,
+            }
+        )
+
+    return users
 
 def get_graph_days_count(year):
     """For the graph, return N days:

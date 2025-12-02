@@ -7,6 +7,9 @@
     <link rel="stylesheet" href="../static/bulma.min.css">
     <style>
       body { font-variant-numeric: tabular-nums; }
+      th.is-clickable { cursor: pointer; user-select: none; }
+      th .sort-arrow { font-size: 0.8em; margin-left: 0.25rem; color: #fff; }
+      th[data-sort-dir] .sort-arrow { color: inherit; }
     </style>
   </head>
   <body>
@@ -51,16 +54,34 @@
       <thead>
         <tr>
           <th>#</th>
-          <th>User</th>
-          <th class="has-text-right">Total stars</th>
+          <th class="has-text-right is-clickable" data-sort-col="1">
+            User ID <span class="sort-arrow">▲</span>
+          </th>
+          <th class="is-clickable" data-sort-col="2">
+            User <span class="sort-arrow">▲</span>
+          </th>
+          <th class="has-text-right is-clickable" data-sort-col="3">
+            Total stars <span class="sort-arrow">▲</span>
+          </th>
+          <th class="is-clickable" data-sort-col="4">
+            First star <span class="sort-arrow">▲</span>
+          </th>
         </tr>
       </thead>
       <tbody>
         {% for u in users %}
         <tr>
-          <td class="has-text-right">{{ loop.index }}</td>
-          <td><a href="../user/{{ u.user_id }}/">{{ u.user_name }}</a></td>
-          <td class="has-text-right">{{ u.total_stars }}</td>
+          <td class="has-text-right row-index">{{ loop.index }}</td>
+          <td class="has-text-right" data-sort="{{ u.user_id }}">{{ u.user_id }}</td>
+          <td data-sort="{{ u.user_name|lower }}">
+            <a href="../user/{{ u.user_id }}/">{{ u.user_name }}</a>
+          </td>
+          <td class="has-text-right" data-sort="{{ u.total_stars }}">{{ u.total_stars }}</td>
+          <td
+            data-sort="{% if u.first_star_ts is not none %}{{ u.first_star_ts }}{% else %}9999999999{% endif %}"
+          >
+            {{ u.first_star_date_time_eastern_time_zone }}
+          </td>
         </tr>
         {% endfor %}
       </tbody>
@@ -76,5 +97,108 @@
   </div>
 </footer>
 
+<script>
+(function () {
+  const table = document.querySelector('table.table');
+  if (!table) return;
+  const thead = table.tHead;
+  const tbody = table.tBodies[0];
+  if (!thead || !tbody) return;
+
+  function renumber() {
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    rows.forEach((tr, i) => {
+      const cell = tr.querySelector('td.row-index');
+      if (cell) cell.textContent = String(i + 1);
+    });
+  }
+
+  function getKey(td) {
+    const v = td.getAttribute('data-sort');
+    return v !== null ? v : td.textContent.trim();
+  }
+
+  // Natural compare: case-insensitive, numbers compared numerically
+  function naturalCmp(a, b) {
+    const ax = [];
+    const bx = [];
+    const re = /(\d+|\D+)/g;
+    String(a).toLowerCase().match(re)?.forEach(s => ax.push(isFinite(s) ? Number(s) : s));
+    String(b).toLowerCase().match(re)?.forEach(s => bx.push(isFinite(s) ? Number(s) : s));
+    const len = Math.max(ax.length, bx.length);
+    for (let i = 0; i < len; i++) {
+      if (i >= ax.length) return -1;
+      if (i >= bx.length) return 1;
+      const av = ax[i], bv = bx[i];
+      if (av === bv) continue;
+      if (typeof av === 'number' && typeof bv === 'number') return av - bv;
+      return String(av).localeCompare(String(bv));
+    }
+    return 0;
+  }
+
+  function clearArrows(exceptTh) {
+    thead.querySelectorAll('th').forEach(th => {
+      if (th !== exceptTh) {
+        th.removeAttribute('data-sort-dir');
+        const span = th.querySelector('.sort-arrow');
+        if (span) span.textContent = '▲';
+      }
+    });
+  }
+
+  function setArrow(th, dir) {
+    const span = th.querySelector('.sort-arrow');
+    if (!span) return;
+    span.textContent = dir === 'asc' ? '▲' : '▼';
+  }
+
+  thead.addEventListener('click', (ev) => {
+    const th = ev.target.closest('th[data-sort-col]');
+    if (!th) return;
+
+    const col = parseInt(th.getAttribute('data-sort-col'), 10);
+    const currentDir = th.getAttribute('data-sort-dir');
+
+    // First click: for Total stars (col 3) start with DESC, others ASC
+    let newDir;
+    if (!currentDir) {
+      newDir = (col === 3 ? 'desc' : 'asc');
+    } else {
+      newDir = currentDir === 'asc' ? 'desc' : 'asc';
+    }
+
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    const withKeys = rows.map(tr => {
+      const td = tr.children[col];
+      return { tr, key: getKey(td) };
+    });
+
+    withKeys.sort((r1, r2) => {
+      const res = naturalCmp(r1.key, r2.key);
+      return newDir === 'asc' ? res : -res;
+    });
+
+    const frag = document.createDocumentFragment();
+    withKeys.forEach(r => frag.appendChild(r.tr));
+    tbody.appendChild(frag);
+    renumber();
+
+    clearArrows(th);
+    th.setAttribute('data-sort-dir', newDir);
+    setArrow(th, newDir);
+  });
+
+  // Initial numbering
+  renumber();
+
+  // Default sort indicator on "Total stars" (column 3), already sorted DESC by SQL
+  const defaultTh = thead.querySelector('th[data-sort-col="3"]');
+  if (defaultTh) {
+    defaultTh.setAttribute('data-sort-dir', 'desc');
+    setArrow(defaultTh, 'desc');
+  }
+})();
+</script>
   </body>
 </html>
