@@ -1,6 +1,10 @@
 # Changelog for visualize_advent_of_code_private_leaderboard
 
 ```
+1.7.0   2025-12-02
+        [Minor]
+        * Add 'User ID' and 'First star' columns to Users page and make data sortable
+
 1.6.1   2025-12-01
         [Patch]
         * Fixing table sort
