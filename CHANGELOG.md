@@ -1,6 +1,10 @@
 # Changelog for visualize_advent_of_code_private_leaderboard
 
 ```
+1.8.0   2025-12-04
+        [Minor]
+        * Graph page - added select controls, added tooltip
+
 1.7.0   2025-12-02
         [Minor]
         * Add 'User ID' and 'First star' columns to Users page and make data sortable
