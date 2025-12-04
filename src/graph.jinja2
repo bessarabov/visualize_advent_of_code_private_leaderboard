@@ -19,7 +19,19 @@
       }
 
       .graph-controls {
-        margin-bottom: 1rem;
+        margin: 0.5rem 0 1rem 0;
+      }
+
+      .graph-select-action {
+        text-decoration: underline dotted;
+        cursor: pointer;
+        margin-right: 1rem;
+      }
+
+      .graph-select-action.is-disabled {
+        text-decoration: none;
+        cursor: default;
+        color: #999;
       }
 
       .axis-line {
@@ -110,8 +122,13 @@
     ></svg>
 
     <br/>
+    <br/>
 
-    <h2 class="subtitle">Users</h2>
+    <div class="graph-controls">
+      <span class="graph-select-action" data-action="top5">Select Top 5</span>
+      <span class="graph-select-action" data-action="all">Select All</span>
+      <span class="graph-select-action" data-action="none">Select None</span>
+    </div>
 
     <table class="table is-bordered">
       <thead>
@@ -175,6 +192,18 @@
   const svg = document.getElementById('aoc-graph');
   if (!svg) return;
 
+  // Tooltip element
+  const tooltipEl = document.createElement('div');
+  tooltipEl.style.position = 'absolute';
+  tooltipEl.style.pointerEvents = 'none';
+  tooltipEl.style.background = 'rgba(0, 0, 0, 0.8)';
+  tooltipEl.style.color = '#fff';
+  tooltipEl.style.padding = '4px 8px';
+  tooltipEl.style.borderRadius = '4px';
+  tooltipEl.style.fontSize = '12px';
+  tooltipEl.style.display = 'none';
+  document.body.appendChild(tooltipEl);
+
   const width = 1000;
   const height = 400;
   const paddingX = 50;
@@ -217,6 +246,11 @@
   const rows = Array.from(document.querySelectorAll('table.table tbody tr'));
   const state = new Map(); // user_id (string) -> { selected: bool, color: string }
 
+  // Selection controls
+  const top5Btn = document.querySelector('.graph-select-action[data-action="top5"]');
+  const allBtn  = document.querySelector('.graph-select-action[data-action="all"]');
+  const noneBtn = document.querySelector('.graph-select-action[data-action="none"]');
+
   rows.forEach((tr, idx) => {
     const userId = tr.getAttribute('data-user-id');
     if (!userId) return;
@@ -227,7 +261,7 @@
     const defaultColor = defaultColorForIndex(idx);
 
     if (colorInput) {
-        colorInput.value = defaultColor;
+      colorInput.value = defaultColor;
     }
 
     state.set(String(userId), {
@@ -242,6 +276,7 @@
           s.selected = checkbox.checked;
         }
         draw();
+        updateSelectionButtons();
       });
     }
 
@@ -433,16 +468,132 @@
       circle.setAttribute('data-timestamp', String(ev.timestamp));
       circle.setAttribute('data-user-stars', String(yStars));
 
+      function showTooltip() {
+        const name = circle.getAttribute('data-user-name') || '';
+        const value = circle.getAttribute('data-user-stars') || '';
+
+        tooltipEl.textContent = name + ' — ' + value;
+        tooltipEl.style.display = 'block';
+
+        // Position tooltip near the dot
+        const pt = svg.createSVGPoint();
+        pt.x = parseFloat(circle.getAttribute('cx'));
+        pt.y = parseFloat(circle.getAttribute('cy'));
+
+        const ctm = circle.getScreenCTM();
+        if (ctm) {
+          const screenPoint = pt.matrixTransform(ctm);
+          const pageX = screenPoint.x + window.scrollX;
+          const pageY = screenPoint.y + window.scrollY;
+
+          tooltipEl.style.left = (pageX + 10) + 'px';
+          tooltipEl.style.top  = (pageY + 10) + 'px';
+        }
+      }
+
+      circle.addEventListener('mouseenter', showTooltip);
+      circle.addEventListener('mousemove', showTooltip);
+      circle.addEventListener('mouseleave', function () {
+        tooltipEl.style.display = 'none';
+      });
+
       svg.appendChild(circle);
     });
   }
 
-  draw();
-})();
-</script>
+  function updateSelectionButtons() {
+    const userIds = Array.from(state.keys());
+    const selectedIds = userIds.filter(id => {
+      const s = state.get(id);
+      return s && s.selected;
+    });
+    const total = userIds.length;
 
+    const allSelected = total > 0 && selectedIds.length === total;
+    const noneSelected = selectedIds.length === 0;
+
+    const topCount = Math.min(5, total);
+    const topIds = userIds.slice(0, topCount);
+    const isTop5 =
+      selectedIds.length === topCount &&
+      topIds.every(id => selectedIds.includes(id));
+
+    function setDisabled(el, disabled) {
+      if (!el) return;
+      if (disabled) {
+        el.classList.add('is-disabled');
+      } else {
+        el.classList.remove('is-disabled');
+      }
+    }
+
+    setDisabled(top5Btn, isTop5);
+    setDisabled(allBtn, allSelected);
+    setDisabled(noneBtn, noneSelected);
+  }
+
+  function applySelection(mode) {
+    const userIds = Array.from(state.keys());
+
+    if (mode === 'top5') {
+      const topCount = Math.min(5, userIds.length);
+      const topSet = new Set(userIds.slice(0, topCount));
+
+      rows.forEach(tr => {
+        const uid = tr.getAttribute('data-user-id');
+        const checkbox = tr.querySelector('input.graph-select');
+        const selected = topSet.has(uid);
+        const s = state.get(uid);
+        if (s) s.selected = selected;
+        if (checkbox) checkbox.checked = selected;
+      });
+    } else if (mode === 'all') {
+      rows.forEach(tr => {
+        const uid = tr.getAttribute('data-user-id');
+        const checkbox = tr.querySelector('input.graph-select');
+        const s = state.get(uid);
+        if (s) s.selected = true;
+        if (checkbox) checkbox.checked = true;
+      });
+    } else if (mode === 'none') {
+      rows.forEach(tr => {
+        const uid = tr.getAttribute('data-user-id');
+        const checkbox = tr.querySelector('input.graph-select');
+        const s = state.get(uid);
+        if (s) s.selected = false;
+        if (checkbox) checkbox.checked = false;
+      });
+    }
+
+    draw();
+    updateSelectionButtons();
+  }
+
+  if (top5Btn) {
+    top5Btn.addEventListener('click', function () {
+      if (top5Btn.classList.contains('is-disabled')) return;
+      applySelection('top5');
+    });
+  }
+
+  if (allBtn) {
+    allBtn.addEventListener('click', function () {
+      if (allBtn.classList.contains('is-disabled')) return;
+      applySelection('all');
+    });
+  }
+
+  if (noneBtn) {
+    noneBtn.addEventListener('click', function () {
+      if (noneBtn.classList.contains('is-disabled')) return;
+      applySelection('none');
+    });
+  }
+
+  draw();
+  updateSelectionButtons();
+})();
 </script>
 
   </body>
 </html>
-
